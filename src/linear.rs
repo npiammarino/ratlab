@@ -1,4 +1,6 @@
+use std::cmp::PartialEq;
 use std::fmt;
+use std::ops::Add;
 
 #[derive(Debug, Clone)]
 pub struct VectorError;
@@ -15,14 +17,67 @@ pub enum Direction {
 }
 use crate::Direction::{Column, Row};
 
-pub trait Number: ToString + fmt::Display + fmt::Debug {}
-impl<T> Number for T where T: ToString + fmt::Display + fmt::Debug {}
+pub trait Number:
+    PartialEq + Add<Output = Self> + ToString + fmt::Display + fmt::Debug + Sized + Copy
+{
+}
+impl<T> Number for T where
+    T: PartialEq + Add<Output = T> + ToString + fmt::Display + fmt::Debug + Copy
+{
+}
 
 #[derive(Debug, Clone)]
 pub struct Vector<T: Number> {
     values: Option<Vec<T>>,
     direction: Option<Direction>,
     element_type: String,
+    length: usize,
+}
+
+impl<T: Number> PartialEq for Vector<T> {
+    fn eq(&self, other: &Vector<T>) -> bool {
+        if self.element_type != other.element_type {
+            return false;
+        }
+
+        if self.length != other.length {
+            return false;
+        }
+
+        // direction equality?
+
+        for (a, b) in self.values.iter().zip(other.values.iter()) {
+            if a != b {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+impl<T: Number> Add for Vector<T> {
+    type Output = Vector<T>;
+    fn add(self, rhs: Vector<T>) -> Vector<T> {
+        // handle this later
+        assert_eq!(self.length, rhs.length);
+
+        if self.length == 0 {
+            return self;
+        }
+
+        // default to row vector?
+        let direction = self.direction.unwrap_or(rhs.direction.unwrap_or(Row));
+
+        let sums: Vec<T> = self
+            .values
+            .expect("Non zero length")
+            .iter()
+            .zip(rhs.values.expect("Non-zero length"))
+            .map(|(&a, b)| a + b)
+            .collect();
+        Vector::build(Vec::from(sums), direction)
+    }
 }
 
 impl<T: Number> fmt::Display for Vector<T> {
@@ -68,11 +123,13 @@ impl<T: Number> Vector<T> {
             values: None,
             direction: None,
             element_type: String::from(std::any::type_name::<T>()),
+            length: 0,
         }
     }
 
     pub fn build(values: Vec<T>, direction: Direction) -> Vector<T> {
         Vector {
+            length: values.len(),
             values: Some(values),
             direction: Some(direction),
             element_type: String::from(std::any::type_name::<T>()),
@@ -82,6 +139,7 @@ impl<T: Number> Vector<T> {
     pub fn populate(&mut self, values: Vec<T>) -> Result<(), VectorError> {
         match self.values {
             None => {
+                self.length = values.len();
                 self.values = Some(values);
                 Ok(())
             }
