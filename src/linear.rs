@@ -10,7 +10,7 @@ impl fmt::Display for VectorError {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Direction {
     Row,
     Column,
@@ -56,27 +56,31 @@ impl<T: Number> PartialEq for Vector<T> {
     }
 }
 
-impl<T: Number> Add for Vector<T> {
+impl<T: Number> Add for &Vector<T> {
     type Output = Vector<T>;
-    fn add(self, rhs: Vector<T>) -> Vector<T> {
+    fn add(self, rhs: &Vector<T>) -> Vector<T> {
         // handle this later
         assert_eq!(self.length, rhs.length);
 
         if self.length == 0 {
-            return self;
+            return self.clone();
         }
 
         // default to row vector?
-        let direction = self.direction.unwrap_or(rhs.direction.unwrap_or(Row));
+        let direction = self
+            .direction
+            .as_ref()
+            .unwrap_or(rhs.direction.as_ref().unwrap_or(&Row));
 
         let sums: Vec<T> = self
             .values
+            .as_ref()
             .expect("Non zero length")
             .iter()
-            .zip(rhs.values.expect("Non-zero length"))
-            .map(|(&a, b)| a + b)
+            .zip(rhs.values.as_ref().expect("Non-zero length"))
+            .map(|(&a, &b)| a + b)
             .collect();
-        Vector::build(Vec::from(sums), direction)
+        Vector::build(Vec::from(sums), *direction)
     }
 }
 
