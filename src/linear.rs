@@ -1,6 +1,6 @@
 use std::cmp::PartialEq;
 use std::fmt;
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 #[derive(Debug, Clone)]
 pub struct VectorError;
@@ -18,11 +18,25 @@ pub enum Direction {
 use crate::Direction::{Column, Row};
 
 pub trait Number:
-    PartialEq + Add<Output = Self> + ToString + fmt::Display + fmt::Debug + Sized + Copy
+    PartialEq
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + ToString
+    + fmt::Display
+    + fmt::Debug
+    + Sized
+    + Copy
 {
 }
 impl<T> Number for T where
-    T: PartialEq + Add<Output = T> + ToString + fmt::Display + fmt::Debug + Copy
+    T: PartialEq
+        + Add<Output = T>
+        + Sub<Output = T>
+        + ToString
+        + fmt::Display
+        + fmt::Debug
+        + Sized
+        + Copy
 {
 }
 
@@ -79,6 +93,34 @@ impl<T: Number> Add for &Vector<T> {
             .iter()
             .zip(rhs.values.as_ref().expect("Non-zero length"))
             .map(|(&a, &b)| a + b)
+            .collect();
+        Vector::build(Vec::from(sums), *direction)
+    }
+}
+
+impl<T: Number> Sub for &Vector<T> {
+    type Output = Vector<T>;
+    fn sub(self, rhs: &Vector<T>) -> Vector<T> {
+        // handle this later
+        assert_eq!(self.length, rhs.length);
+
+        if self.length == 0 {
+            return self.clone();
+        }
+
+        // default to row vector?
+        let direction = self
+            .direction
+            .as_ref()
+            .unwrap_or(rhs.direction.as_ref().unwrap_or(&Row));
+
+        let sums: Vec<T> = self
+            .values
+            .as_ref()
+            .expect("Non zero length")
+            .iter()
+            .zip(rhs.values.as_ref().expect("Non-zero length"))
+            .map(|(&a, &b)| a - b)
             .collect();
         Vector::build(Vec::from(sums), *direction)
     }

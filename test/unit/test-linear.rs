@@ -51,3 +51,24 @@ fn test_add() {
     assert_ne!(&x + &y, bad1);
     assert_ne!(&x + &y, bad2);
 }
+
+#[test]
+fn test_sub() {
+    let x = Vector::<i32>::build(vec![7, 6, 5], Row);
+    let y = Vector::<i32>::build(vec![3, 2, 1], Column);
+
+    let r1 = Vector::<i32>::build(vec![4, 4, 4], Row);
+    let r2 = Vector::<i32>::build(vec![4, 4, 4], Column);
+    let r3 = Vector::<i32>::build(vec![-4, -4, -4], Row);
+    let r4 = Vector::<i32>::build(vec![-4, -4, -4], Column);
+
+    assert_eq!(&x - &y, r1);
+    assert_eq!(&x - &y, r2);
+    assert_ne!(&x - &y, r3);
+    assert_ne!(&x - &y, r4);
+
+    assert_eq!(&y - &x, r3);
+    assert_eq!(&y - &x, r4);
+    assert_ne!(&y - &x, r1);
+    assert_ne!(&y - &x, r2);
+}
