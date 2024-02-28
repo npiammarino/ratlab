@@ -10,6 +10,13 @@ impl fmt::Display for VectorError {
     }
 }
 
+pub struct MatrixError;
+impl fmt::Display for MatrixError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "MATRIX ERROR, SON!")
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Direction {
     Row,
@@ -46,6 +53,13 @@ pub struct Vector<T: Number> {
     direction: Option<Direction>,
     element_type: String,
     length: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct Matrix<T: Number> {
+    element_type: String,
+    values: Option<Vec<T>>,
+    columns: usize,
 }
 
 impl<T: Number> PartialEq for Vector<T> {
@@ -195,5 +209,50 @@ impl<T: Number> Vector<T> {
 
     pub fn direct(&mut self, direction: Direction) {
         self.direction = Some(direction);
+    }
+}
+
+impl<T: Number> Matrix<T> {
+    pub fn new() -> Matrix<T> {
+        Matrix {
+            element_type: String::from(std::any::type_name::<T>()),
+            values: None,
+            columns: 0,
+        }
+    }
+
+    pub fn build(values: Vec<T>, columns: usize) -> Result<Matrix<T>, MatrixError> {
+        if values.len() % columns == 0 {
+            Ok(Matrix {
+                element_type: String::from(std::any::type_name::<T>()),
+                values: Some(values),
+                columns,
+            })
+        } else {
+            Err(MatrixError)
+        }
+    }
+}
+
+impl<T: Number> fmt::Display for Matrix<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.values.as_ref() {
+            Some(values) => {
+                let vals = format!("{:?}", values);
+                let matrix: Vec<&str> = vals.split(" ").collect();
+                let mut result: String = String::new();
+                for (i, s) in matrix.iter().enumerate() {
+                    if i == matrix.len() - 1 {
+                        result.push_str(&format!("{} |", s.replace(&['[', ',', ']'], ""))[..]);
+                    } else if (i + 1) % self.columns == 0 {
+                        result.push_str(&format!("{} |\n|  ", s.replace(&['[', ',', ']'], ""))[..]);
+                    } else {
+                        result.push_str(&format!("{},\t", s.replace(&['[', ',', ']'], ""))[..]);
+                    }
+                }
+                write!(f, "<{}>\n|  {}", self.element_type, result)
+            }
+            None => write!(f, "<{}>\n[ ]", self.element_type),
+        }
     }
 }

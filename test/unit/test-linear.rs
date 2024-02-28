@@ -72,3 +72,17 @@ fn test_sub() {
     assert_ne!(&y - &x, r1);
     assert_ne!(&y - &x, r2);
 }
+
+#[test]
+fn test_inits_matrix() {
+    let m = Matrix::<i32>::new();
+    assert_eq!(format!("{m}"), "<i32>\n[ ]");
+
+    let n: Matrix<i32> = Matrix::build(vec![1i32, 2, 3, 4], 2).ok().unwrap();
+    assert_eq!(format!("{n}"), "<i32>\n|  1,\t2 |\n|  3,\t4 |");
+
+    match Matrix::build(vec![1, 2, 3], 2) {
+        Ok(_) => panic!("accepting bad matrix dimensions"),
+        _ => {}
+    }
+}
