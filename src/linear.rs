@@ -234,6 +234,41 @@ impl<T: Number> Matrix<T> {
     }
 }
 
+impl<T: Number> PartialEq for Matrix<T> {
+    fn eq(&self, other: &Matrix<T>) -> bool {
+        if self.columns != other.columns {
+            return false;
+        }
+
+        if let (Some(v1), Some(v2)) = (self.values.as_ref(), other.values.as_ref()) {
+            for (a, b) in v1.iter().zip(v2.iter()) {
+                if a != b {
+                    return false;
+                }
+            }
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl<T: Number> Add for &Matrix<T> {
+    type Output = Matrix<T>;
+    fn add(self, rhs: &Matrix<T>) -> Matrix<T> {
+        match (self.values.as_ref(), rhs.values.as_ref()) {
+            (None, _) => rhs.clone(),
+            (_, None) => self.clone(),
+            (Some(v1), Some(v2)) => {
+                assert_eq!(v1.len(), v2.len());
+                assert_eq!(self.columns, rhs.columns);
+                let new_values: Vec<T> = v1.iter().zip(v2.iter()).map(|(&a, &b)| a + b).collect();
+                Matrix::build(new_values, self.columns).expect("Error should be caught by asserts")
+            }
+        }
+    }
+}
+
 impl<T: Number> fmt::Display for Matrix<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.values.as_ref() {

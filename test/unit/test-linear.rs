@@ -35,7 +35,7 @@ fn test_eq() {
 }
 
 #[test]
-fn test_add() {
+fn test_add_vector() {
     let x = Vector::<i32>::build(vec![1, 2, 3], Row);
     let y = Vector::<i32>::build(vec![3, 2, 1], Column);
 
@@ -53,7 +53,7 @@ fn test_add() {
 }
 
 #[test]
-fn test_sub() {
+fn test_sub_vector() {
     let x = Vector::<i32>::build(vec![7, 6, 5], Row);
     let y = Vector::<i32>::build(vec![3, 2, 1], Column);
 
@@ -85,4 +85,14 @@ fn test_inits_matrix() {
         Ok(_) => panic!("accepting bad matrix dimensions"),
         _ => {}
     }
+}
+
+#[test]
+fn test_add_matrix() {
+    let a = Matrix::<i32>::build(vec![1, 2, 3, 4], 2).unwrap();
+    let b = Matrix::<i32>::build(vec![4, 3, 2, 1], 2).unwrap();
+    let sum = Matrix::<i32>::build(vec![5, 5, 5, 5], 2).unwrap();
+
+    assert_eq!(sum, &a + &b);
+    assert_ne!(a, b);
 }
