@@ -1,6 +1,6 @@
 use std::cmp::PartialEq;
 use std::fmt;
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Debug, Clone)]
 pub struct VectorError;
@@ -10,6 +10,7 @@ impl fmt::Display for VectorError {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct MatrixError;
 impl fmt::Display for MatrixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -28,6 +29,7 @@ pub trait Number:
     PartialEq
     + Add<Output = Self>
     + Sub<Output = Self>
+    + Mul<Output = Self>
     + ToString
     + fmt::Display
     + fmt::Debug
@@ -39,6 +41,7 @@ impl<T> Number for T where
     T: PartialEq
         + Add<Output = T>
         + Sub<Output = T>
+        + Mul<Output = T>
         + ToString
         + fmt::Display
         + fmt::Debug
@@ -64,10 +67,6 @@ pub struct Matrix<T: Number> {
 
 impl<T: Number> PartialEq for Vector<T> {
     fn eq(&self, other: &Vector<T>) -> bool {
-        if self.element_type != other.element_type {
-            return false;
-        }
-
         if self.length != other.length {
             return false;
         }
@@ -139,6 +138,10 @@ impl<T: Number> Sub for &Vector<T> {
         Vector::build(Vec::from(sums), *direction)
     }
 }
+
+// impl<T: Number> Mul for &Vector<T> {
+//     // requires matrices
+// }
 
 impl<T: Number> fmt::Display for Vector<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -263,6 +266,22 @@ impl<T: Number> Add for &Matrix<T> {
                 assert_eq!(v1.len(), v2.len());
                 assert_eq!(self.columns, rhs.columns);
                 let new_values: Vec<T> = v1.iter().zip(v2.iter()).map(|(&a, &b)| a + b).collect();
+                Matrix::build(new_values, self.columns).expect("Error should be caught by asserts")
+            }
+        }
+    }
+}
+
+impl<T: Number> Sub for &Matrix<T> {
+    type Output = Matrix<T>;
+    fn sub(self, rhs: &Matrix<T>) -> Matrix<T> {
+        match (self.values.as_ref(), rhs.values.as_ref()) {
+            (None, _) => rhs.clone(),
+            (_, None) => self.clone(),
+            (Some(v1), Some(v2)) => {
+                assert_eq!(v1.len(), v2.len());
+                assert_eq!(self.columns, rhs.columns);
+                let new_values: Vec<T> = v1.iter().zip(v2.iter()).map(|(&a, &b)| a - b).collect();
                 Matrix::build(new_values, self.columns).expect("Error should be caught by asserts")
             }
         }

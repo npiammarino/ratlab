@@ -96,3 +96,17 @@ fn test_add_matrix() {
     assert_eq!(sum, &a + &b);
     assert_ne!(a, b);
 }
+
+#[test]
+fn test_sub_matrix() {
+    let m = Matrix::build(vec![6, 2, 1, 7], 2).unwrap();
+    let n = Matrix::build(vec![3, 3, 5, 6], 2).unwrap();
+
+    let r1 = Matrix::build(vec![3, -1, -4, 1], 2).unwrap();
+    let r2 = Matrix::build(vec![-3, 1, 4, -1], 2).unwrap();
+
+    assert_eq!(&m - &n, r1);
+    assert_eq!(&n - &m, r2);
+    assert_ne!(&m - &n, r2);
+    assert_ne!(&n - &m, r1);
+}
