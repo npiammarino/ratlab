@@ -1,12 +1,20 @@
 use std::cmp::PartialEq;
 use std::fmt;
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Debug, Clone)]
 pub struct VectorError;
 impl fmt::Display for VectorError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "VECTOR ERROR, SON!")
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MatrixError;
+impl fmt::Display for MatrixError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "MATRIX ERROR, SON!")
     }
 }
 
@@ -21,6 +29,7 @@ pub trait Number:
     PartialEq
     + Add<Output = Self>
     + Sub<Output = Self>
+    + Mul<Output = Self>
     + ToString
     + fmt::Display
     + fmt::Debug
@@ -32,6 +41,7 @@ impl<T> Number for T where
     T: PartialEq
         + Add<Output = T>
         + Sub<Output = T>
+        + Mul<Output = T>
         + ToString
         + fmt::Display
         + fmt::Debug
@@ -48,12 +58,15 @@ pub struct Vector<T: Number> {
     length: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct Matrix<T: Number> {
+    element_type: String,
+    values: Option<Vec<T>>,
+    columns: usize,
+}
+
 impl<T: Number> PartialEq for Vector<T> {
     fn eq(&self, other: &Vector<T>) -> bool {
-        if self.element_type != other.element_type {
-            return false;
-        }
-
         if self.length != other.length {
             return false;
         }
@@ -126,6 +139,10 @@ impl<T: Number> Sub for &Vector<T> {
     }
 }
 
+// impl<T: Number> Mul for &Vector<T> {
+//     // requires matrices
+// }
+
 impl<T: Number> fmt::Display for Vector<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match (&self.direction, &self.values) {
@@ -195,5 +212,101 @@ impl<T: Number> Vector<T> {
 
     pub fn direct(&mut self, direction: Direction) {
         self.direction = Some(direction);
+    }
+}
+
+impl<T: Number> Matrix<T> {
+    pub fn new() -> Matrix<T> {
+        Matrix {
+            element_type: String::from(std::any::type_name::<T>()),
+            values: None,
+            columns: 0,
+        }
+    }
+
+    pub fn build(values: Vec<T>, columns: usize) -> Result<Matrix<T>, MatrixError> {
+        if values.len() % columns == 0 {
+            Ok(Matrix {
+                element_type: String::from(std::any::type_name::<T>()),
+                values: Some(values),
+                columns,
+            })
+        } else {
+            Err(MatrixError)
+        }
+    }
+}
+
+impl<T: Number> PartialEq for Matrix<T> {
+    fn eq(&self, other: &Matrix<T>) -> bool {
+        if self.columns != other.columns {
+            return false;
+        }
+
+        if let (Some(v1), Some(v2)) = (self.values.as_ref(), other.values.as_ref()) {
+            for (a, b) in v1.iter().zip(v2.iter()) {
+                if a != b {
+                    return false;
+                }
+            }
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl<T: Number> Add for &Matrix<T> {
+    type Output = Matrix<T>;
+    fn add(self, rhs: &Matrix<T>) -> Matrix<T> {
+        match (self.values.as_ref(), rhs.values.as_ref()) {
+            (None, _) => rhs.clone(),
+            (_, None) => self.clone(),
+            (Some(v1), Some(v2)) => {
+                assert_eq!(v1.len(), v2.len());
+                assert_eq!(self.columns, rhs.columns);
+                let new_values: Vec<T> = v1.iter().zip(v2.iter()).map(|(&a, &b)| a + b).collect();
+                Matrix::build(new_values, self.columns).expect("Error should be caught by asserts")
+            }
+        }
+    }
+}
+
+impl<T: Number> Sub for &Matrix<T> {
+    type Output = Matrix<T>;
+    fn sub(self, rhs: &Matrix<T>) -> Matrix<T> {
+        match (self.values.as_ref(), rhs.values.as_ref()) {
+            (None, _) => rhs.clone(),
+            (_, None) => self.clone(),
+            (Some(v1), Some(v2)) => {
+                assert_eq!(v1.len(), v2.len());
+                assert_eq!(self.columns, rhs.columns);
+                let new_values: Vec<T> = v1.iter().zip(v2.iter()).map(|(&a, &b)| a - b).collect();
+                Matrix::build(new_values, self.columns).expect("Error should be caught by asserts")
+            }
+        }
+    }
+}
+
+impl<T: Number> fmt::Display for Matrix<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.values.as_ref() {
+            Some(values) => {
+                let vals = format!("{:?}", values);
+                let matrix: Vec<&str> = vals.split(" ").collect();
+                let mut result: String = String::new();
+                for (i, s) in matrix.iter().enumerate() {
+                    if i == matrix.len() - 1 {
+                        result.push_str(&format!("{} |", s.replace(&['[', ',', ']'], ""))[..]);
+                    } else if (i + 1) % self.columns == 0 {
+                        result.push_str(&format!("{} |\n|  ", s.replace(&['[', ',', ']'], ""))[..]);
+                    } else {
+                        result.push_str(&format!("{},\t", s.replace(&['[', ',', ']'], ""))[..]);
+                    }
+                }
+                write!(f, "<{}>\n|  {}", self.element_type, result)
+            }
+            None => write!(f, "<{}>\n[ ]", self.element_type),
+        }
     }
 }

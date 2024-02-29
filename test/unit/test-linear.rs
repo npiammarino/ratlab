@@ -35,7 +35,7 @@ fn test_eq() {
 }
 
 #[test]
-fn test_add() {
+fn test_add_vector() {
     let x = Vector::<i32>::build(vec![1, 2, 3], Row);
     let y = Vector::<i32>::build(vec![3, 2, 1], Column);
 
@@ -53,7 +53,7 @@ fn test_add() {
 }
 
 #[test]
-fn test_sub() {
+fn test_sub_vector() {
     let x = Vector::<i32>::build(vec![7, 6, 5], Row);
     let y = Vector::<i32>::build(vec![3, 2, 1], Column);
 
@@ -71,4 +71,42 @@ fn test_sub() {
     assert_eq!(&y - &x, r4);
     assert_ne!(&y - &x, r1);
     assert_ne!(&y - &x, r2);
+}
+
+#[test]
+fn test_inits_matrix() {
+    let m = Matrix::<i32>::new();
+    assert_eq!(format!("{m}"), "<i32>\n[ ]");
+
+    let n: Matrix<i32> = Matrix::build(vec![1i32, 2, 3, 4], 2).ok().unwrap();
+    assert_eq!(format!("{n}"), "<i32>\n|  1,\t2 |\n|  3,\t4 |");
+
+    match Matrix::build(vec![1, 2, 3], 2) {
+        Ok(_) => panic!("accepting bad matrix dimensions"),
+        _ => {}
+    }
+}
+
+#[test]
+fn test_add_matrix() {
+    let a = Matrix::<i32>::build(vec![1, 2, 3, 4], 2).unwrap();
+    let b = Matrix::<i32>::build(vec![4, 3, 2, 1], 2).unwrap();
+    let sum = Matrix::<i32>::build(vec![5, 5, 5, 5], 2).unwrap();
+
+    assert_eq!(sum, &a + &b);
+    assert_ne!(a, b);
+}
+
+#[test]
+fn test_sub_matrix() {
+    let m = Matrix::build(vec![6, 2, 1, 7], 2).unwrap();
+    let n = Matrix::build(vec![3, 3, 5, 6], 2).unwrap();
+
+    let r1 = Matrix::build(vec![3, -1, -4, 1], 2).unwrap();
+    let r2 = Matrix::build(vec![-3, 1, 4, -1], 2).unwrap();
+
+    assert_eq!(&m - &n, r1);
+    assert_eq!(&n - &m, r2);
+    assert_ne!(&m - &n, r2);
+    assert_ne!(&n - &m, r1);
 }
