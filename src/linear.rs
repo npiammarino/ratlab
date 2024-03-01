@@ -139,9 +139,68 @@ impl<T: Number> Sub for &Vector<T> {
     }
 }
 
-// impl<T: Number> Mul for &Vector<T> {
-//     // requires matrices
-// }
+impl<T: Number> Mul for &Vector<T> {
+    type Output = Matrix<T>;
+    fn mul(self, rhs: &Vector<T>) -> Matrix<T> {
+        // check values here
+
+        match (self.direction.as_ref(), rhs.direction.as_ref()) {
+            (Some(dir1), Some(dir2)) => match (dir1, dir2) {
+                (Column, Row) => {
+                    let mut result: Vec<T> = Vec::new();
+                    for &j in rhs
+                        .values
+                        .as_ref()
+                        .expect("Should be cautght by asserts")
+                        .iter()
+                    {
+                        for &i in self
+                            .values
+                            .as_ref()
+                            .expect("Should be caught by asserts")
+                            .iter()
+                        {
+                            result.push(i * j);
+                        }
+                    }
+                    Matrix::<T>::build(
+                        result,
+                        self.values
+                            .as_ref()
+                            .expect("Should be caught by asserts")
+                            .len(),
+                    )
+                    .expect("Constructed")
+                }
+                (Row, Column) => {
+                    let mut products = self
+                        .values
+                        .as_ref()
+                        .expect("Should be caught by asserts")
+                        .iter()
+                        .zip(
+                            rhs.values
+                                .as_ref()
+                                .expect("Should be caught by asserts")
+                                .iter(),
+                        )
+                        .map(|(&a, &b)| a * b);
+
+                    let mut sum = products.next().expect("Should be caught by asserts");
+                    for product in products {
+                        sum = sum + product;
+                    }
+
+                    Matrix::<T>::build(vec![sum as T], 1).expect("Constructed")
+                }
+                _ => panic!("Improper direction for product"),
+            },
+            _ => panic!("Missing direction."),
+        }
+
+        // do calc
+    }
+}
 
 impl<T: Number> fmt::Display for Vector<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
